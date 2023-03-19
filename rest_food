@@ -1,0 +1,61 @@
+package main
+
+import (
+    "bufio"
+    "fmt"
+    "os"
+    "strconv"
+)
+
+type MenuCount struct {
+    MenuId  int
+    Count   int
+}
+
+func main() {
+    file, err := os.Open("log.txt")
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+    defer file.Close()
+
+    menuCounts := make(map[int]int)
+    scanner := bufio.NewScanner(file)
+    for scanner.Scan() {
+        line := scanner.Text()
+        values := strings.Split(line, ",")
+        eaterId, err := strconv.Atoi(values[0])
+        if err != nil {
+            fmt.Println(err)
+            return
+        }
+        menuId, err := strconv.Atoi(values[1])
+        if err != nil {
+            fmt.Println(err)
+            return
+        }
+
+        if _, exists := menuCounts[menuId]; exists {
+            fmt.Printf("Error: Eater %d has ordered menu item %d more than once.\n", eaterId, menuId)
+            return
+        }
+        menuCounts[menuId]++
+    }
+
+    top3 := []MenuCount{}
+    for menuId, count := range menuCounts {
+        top3 = append(top3, MenuCount{menuId, count})
+    }
+    sort.Slice(top3, func(i, j int) bool {
+        return top3[i].Count > top3[j].Count
+    })
+
+    fmt.Println("Top 3 menu items consumed:")
+    for i, menuCount := range top3 {
+        if i >= 3 {
+            break
+        }
+        fmt.Printf("%d. Menu item %d, consumed %d times.\n", i+1, menuCount.MenuId, menuCount.Count)
+    }
+}
